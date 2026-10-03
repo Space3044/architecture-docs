@@ -1,0 +1,29 @@
+{
+  "name": "architecture-docs",
+  "version": "0.1.0",
+  "description": "Manifest-driven static documentation portal and coverage checker",
+  "type": "module",
+  "bin": {
+    "architecture-docs": "bin/architecture-docs.mjs"
+  },
+  "exports": {
+    ".": "./src/index.mjs",
+    "./providers": "./src/providers/contract.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "templates",
+    "schemas",
+    "fixtures",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "check": "node --check bin/architecture-docs.mjs"
+  },
+  "license": "MIT"
+}

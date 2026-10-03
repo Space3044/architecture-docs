@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "architecture-docs manifest",
+  "type": "object",
+  "required": ["schema_version"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "project": {
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "description": { "type": "string" }
+          },
+          "additionalProperties": true
+        }
+      ]
+    },
+    "groups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "label": { "type": "string" },
+          "question": { "type": "string" },
+          "entry_ids": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": true
+      }
+    },
+    "entries": { "type": "array" },
+    "diagrams": { "type": "array" },
+    "documents": { "type": "array" }
+  },
+  "anyOf": [
+    { "required": ["entries"] },
+    { "required": ["diagrams"] },
+    { "required": ["documents"] }
+  ],
+  "additionalProperties": true
+}

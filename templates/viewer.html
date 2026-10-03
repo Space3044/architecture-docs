@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="文档图谱统一查看器">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3Crect width='1' height='1' fill='%232358c7'/%3E%3C/svg%3E">
+  <title>Documentation Atlas</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17242b;
+      --muted: #68757a;
+      --faint: #9aa3a3;
+      --bg: #eeece6;
+      --panel: #ffffff;
+      --line: #d5d6cf;
+      --line-strong: #aeb5b0;
+      --teal: #2358c7;
+      --shadow: 0 8px 22px rgba(32, 43, 44, 0.06);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-synthesis: none;
+    }
+    * { box-sizing: border-box; }
+    html, body { min-width: 320px; min-height: 100%; margin: 0; }
+    body {
+      color: var(--ink);
+      background: linear-gradient(112deg, rgba(255, 255, 255, 0.46), transparent 38%), var(--bg);
+    }
+    button, input, select { font: inherit; }
+    a { color: inherit; text-decoration: none; }
+    a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 2px solid var(--teal);
+      outline-offset: 3px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      max-width: 1680px;
+      margin: 0 auto;
+      padding: 16px 28px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    .brand { display: flex; align-items: center; gap: 13px; min-width: 0; }
+    .brand-mark {
+      display: grid;
+      width: 32px;
+      height: 32px;
+      flex: 0 0 auto;
+      place-items: center;
+      color: #fff;
+      font-family: Georgia, serif;
+      font-size: 17px;
+      font-weight: 700;
+      background: var(--teal);
+      border-radius: 4px;
+    }
+    .brand-kicker, .eyebrow, .axis-code, .stage-state, .catalog-status, .type-badge {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .brand-kicker { display: block; margin-bottom: 4px; color: var(--teal); font-size: 10px; font-weight: 700; }
+    .brand h1 {
+      max-width: min(60vw, 720px);
+      margin: 0;
+      overflow: hidden;
+      font-family: Georgia, "Times New Roman", "Songti SC", serif;
+      font-size: clamp(20px, 2vw, 25px);
+      letter-spacing: -0.045em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .top-actions { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+    .catalog-status { padding: 6px 9px; border: 1px solid var(--line); border-radius: 999px; font-size: 9px; }
+    .text-link { padding: 8px 9px; border-radius: 8px; }
+    .text-link:hover { color: var(--ink); background: rgba(255, 255, 255, 0.55); }
+    .layout {
+      display: grid;
+      grid-template-columns: 226px minmax(0, 1fr);
+      gap: 30px;
+      max-width: 1680px;
+      min-height: calc(100svh - 74px);
+      margin: 0 auto;
+      padding: 20px 28px 28px;
+    }
+    .workspace { grid-column: 2; min-width: 0; }
+    .sidebar {
+      display: flex;
+      grid-column: 1;
+      flex-direction: column;
+      min-height: 0;
+      max-height: calc(100svh - 38px);
+      padding-right: 6px;
+      position: sticky;
+      top: 16px;
+      overflow: auto;
+      scrollbar-width: thin;
+    }
+    .sidebar-intro { padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+    .eyebrow { margin: 0 0 8px; color: var(--muted); font-size: 10px; font-weight: 700; }
+    .sidebar-intro h2 { margin: 0 0 9px; font-family: Georgia, serif; font-size: 22px; line-height: 1.1; letter-spacing: -0.045em; }
+    .sidebar-intro p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .axis-list { display: grid; gap: 10px; padding-top: 14px; }
+    .axis-button {
+      display: grid;
+      grid-template-columns: 25px minmax(0, 1fr) auto;
+      align-items: center;
+      width: 100%;
+      gap: 8px;
+      padding: 5px 0;
+      color: var(--muted);
+      text-align: left;
+      cursor: pointer;
+      background: transparent;
+      border: 0;
+    }
+    .axis-button:hover, .axis-section.is-active .axis-button { color: var(--ink); }
+    .axis-code { color: var(--lens, var(--teal)); font-size: 10px; font-weight: 800; }
+    .axis-name { font-size: 13px; font-weight: 700; }
+    .axis-count { min-width: 24px; padding: 3px 6px; color: var(--muted); font-size: 11px; text-align: center; background: rgba(255,255,255,.36); border: 1px solid var(--line); border-radius: 999px; }
+    .entry-list { display: grid; gap: 3px; margin: 5px 0 0 25px; padding-left: 11px; border-left: 1px solid var(--line); }
+    .entry-list[hidden] { display: none; }
+    .entry-item {
+      display: grid;
+      gap: 2px;
+      width: 100%;
+      padding: 7px 8px;
+      color: var(--muted);
+      text-align: left;
+      cursor: pointer;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 4px;
+    }
+    .entry-item:hover { color: var(--ink); background: rgba(255,255,255,.48); }
+    .entry-item.is-selected { color: var(--ink); background: #fff; border-color: var(--line-strong); box-shadow: 0 2px 0 rgba(32,43,44,.04); }
+    .entry-id { overflow: hidden; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 10px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    .entry-question { display: -webkit-box; overflow: hidden; color: var(--faint); font-size: 11px; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+    .entry-meta { overflow: hidden; color: var(--faint); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 9px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+    .sidebar-foot { display: grid; gap: 8px; margin-top: auto; padding-top: 13px; color: var(--faint); font-size: 10.5px; line-height: 1.5; border-top: 1px solid var(--line); }
+    .sidebar-foot strong { color: var(--muted); }
+    .workspace-head { padding-bottom: 12px; }
+    .crumbs { display: flex; gap: 8px; margin-bottom: 8px; color: var(--muted); font-size: 12px; }
+    .crumbs .current { color: var(--lens, var(--teal)); font-weight: 700; }
+    .viewer-title-row { display: flex; align-items: start; justify-content: space-between; gap: 16px; }
+    .viewer-title-row h2 { margin: 0; font-family: Georgia, serif; font-size: clamp(26px, 2.6vw, 38px); line-height: 1.05; letter-spacing: -0.06em; }
+    .viewer-question { max-width: 760px; margin: 7px 0 0; color: var(--muted); font-size: 14px; line-height: 1.65; }
+    .type-badge { flex: 0 0 auto; padding: 7px 9px; color: var(--lens, var(--teal)); font-size: 10px; font-weight: 800; border: 1px solid var(--lens, var(--teal)); border-radius: 3px; }
+    .toolbar { display: flex; align-items: center; gap: 7px; padding: 10px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .search-box { display: flex; align-items: center; min-width: 160px; max-width: 300px; flex: 1; gap: 8px; padding: 8px 10px; color: var(--muted); background: rgba(255,255,255,.72); border: 1px solid var(--line); border-radius: 4px; }
+    .search-box input { width: 100%; min-width: 0; color: var(--ink); background: transparent; border: 0; outline: 0; }
+    .tool-button { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; padding: 0 12px; color: var(--muted); font-size: 12px; cursor: pointer; background: transparent; border: 1px solid var(--line); border-radius: 4px; }
+    .tool-button:hover { color: var(--ink); border-color: var(--line-strong); background: rgba(255,255,255,.54); }
+    .tool-button.primary { color: #fff; background: var(--ink); border-color: var(--ink); font-weight: 800; }
+    .tool-button.is-disabled { opacity: .42; pointer-events: none; }
+    .stage { display: flex; min-height: clamp(440px, calc(100svh - 252px), 680px); margin-top: 12px; flex-direction: column; overflow: hidden; background: #fbfcfa; border: 1px solid var(--line-strong); border-radius: 4px; box-shadow: var(--shadow); }
+    .stage-topline { display: flex; align-items: center; justify-content: space-between; min-height: 30px; padding: 0 13px; color: #6d7b7e; background: #f5f6f2; border-bottom: 1px solid var(--line); }
+    .stage-state { font-size: 9px; font-weight: 800; }
+    .stage-hint { font-size: 11px; }
+    .preview-frame { display: block; width: 100%; min-height: 0; flex: 1 1 auto; background: #fbfcfa; border: 0; }
+    .stage-empty { display: none; min-height: 0; flex: 1 1 auto; place-items: center; padding: 40px; color: #6d7b7e; text-align: center; }
+    .planned-panel { display: grid; gap: 10px; margin: 18px 0 28px; padding: 14px 16px; color: var(--muted); background: rgba(255,255,255,.34); border: 1px dashed var(--line-strong); border-radius: 4px; }
+    .planned-panel[hidden] { display: none; }
+    .planned-heading { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; }
+    .planned-heading strong { color: var(--ink); }
+    .planned-list { display: flex; flex-wrap: wrap; gap: 7px; }
+    .planned-chip { padding: 5px 8px; color: var(--faint); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 10px; background: rgba(255,255,255,.62); border: 1px solid var(--line); border-radius: 3px; }
+    @media (max-width: 980px) {
+      .topbar { padding: 16px 18px 14px; }
+      .layout { display: flex; min-height: auto; flex-direction: column; gap: 26px; padding: 18px 18px 26px; }
+      .workspace { order: 1; }
+      .sidebar { order: 2; max-height: none; position: static; overflow: visible; }
+      .axis-list { display: flex; flex-wrap: wrap; gap: 6px; }
+      .axis-section { display: contents; }
+      .axis-button { flex: 1 1 calc(25% - 6px); min-width: 0; padding: 8px; background: rgba(255,255,255,.28); border: 1px solid transparent; border-radius: 4px; }
+      .axis-section.is-active .axis-button { background: #fff; border-color: var(--line-strong); }
+      .axis-section.is-active .entry-list { flex: 0 0 100%; order: 1; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; margin: 2px 0 0; padding: 9px 0 0; border-top: 1px solid var(--line); border-left: 0; }
+      .sidebar-foot { margin-top: 10px; }
+      .stage { min-height: clamp(440px, 60svh, 560px); }
+    }
+    @media (max-width: 620px) {
+      .top-actions .text-link { display: none; }
+      .topbar { gap: 10px; padding-left: 14px; padding-right: 14px; }
+      .layout { padding-left: 14px; padding-right: 14px; }
+      .viewer-title-row { gap: 10px; }
+      .viewer-title-row h2 { font-size: 28px; }
+      .viewer-question { font-size: 13px; }
+      .toolbar { flex-wrap: wrap; }
+      .search-box { max-width: none; flex-basis: 100%; }
+      .axis-button { flex-basis: calc(50% - 6px); }
+      .axis-section.is-active .entry-list { grid-template-columns: 1fr; }
+      .stage { min-height: 440px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" id="brandLink" href="#">
+      <span class="brand-mark" aria-hidden="true">A</span>
+      <span>
+        <span class="brand-kicker">Documentation knowledge base</span>
+        <h1 id="projectName">Documentation Atlas</h1>
+      </span>
+    </a>
+    <div class="top-actions">
+      <span class="catalog-status" id="catalogStatus">catalog ready</span>
+      <a class="text-link" id="readmeLink" href="#">阅读说明</a>
+      <a class="text-link" id="manifestLink" href="#" target="_blank" rel="noreferrer">目录清单</a>
+    </div>
+  </header>
+  <main class="layout">
+    <section class="workspace" aria-label="文档预览区">
+      <div class="workspace-head">
+        <div class="crumbs"><span>ATLAS</span><span>/</span><span class="current" id="groupLabel">Documents</span></div>
+        <div class="viewer-title-row">
+          <div>
+            <h2 id="viewerTitle">DOCUMENTATION</h2>
+            <p class="viewer-question" id="viewerQuestion"></p>
+          </div>
+          <span class="type-badge" id="viewerType">DOCUMENT</span>
+        </div>
+      </div>
+      <div class="toolbar">
+        <label class="search-box" for="entrySearch"><span aria-hidden="true">⌕</span><input id="entrySearch" type="search" placeholder="搜索文档名称或问题" autocomplete="off"></label>
+        <button class="tool-button" id="refreshPreview" type="button">重新载入</button>
+        <a class="tool-button primary" id="openArtifact" href="#" target="_blank" rel="noreferrer">完整预览</a>
+        <a class="tool-button" id="openSource" href="#" target="_blank" rel="noreferrer">打开源文件</a>
+      </div>
+      <div class="stage">
+        <div class="stage-topline"><span class="stage-state" id="stageState">loading</span><span class="stage-hint">单一内容区 · 原始文件可单独打开</span></div>
+        <iframe class="preview-frame" id="previewFrame" title="文档预览" loading="eager" referrerpolicy="no-referrer"></iframe>
+        <div class="stage-empty" id="stageEmpty"><div><strong id="stageEmptyTitle">暂无 HTML 预览</strong><p id="stageEmptyText">请打开源文件阅读该条目。</p></div></div>
+      </div>
+    </section>
+    <aside class="sidebar" id="entryIndex" aria-label="文档分类">
+      <div class="sidebar-intro">
+        <p class="eyebrow">Browse by question</p>
+        <h2>文档索引</h2>
+        <p id="projectDescription">按要回答的问题进入对应资料。</p>
+      </div>
+      <nav class="axis-list" id="groupList"></nav>
+      <div class="planned-panel" id="plannedPanel" hidden>
+        <div class="planned-heading"><strong>维护队列</strong><span>已登记，尚未生成预览</span></div>
+        <div class="planned-list" id="plannedList"></div>
+      </div>
+      <div class="sidebar-foot"><span><strong>快捷方式</strong> · 搜索框支持名称、问题和标签。</span><span id="catalogMeta">由 manifest 生成</span></div>
+    </aside>
+  </main>
+  <!-- ARCHITECTURE_VIEWER_CATALOG_SHA256:__ARCHITECTURE_VIEWER_CATALOG_SHA256__ -->
+  <script>
+    window.__ARCHITECTURE_VIEWER__ = __ARCHITECTURE_VIEWER_DATA__;
+  </script>
+  <script>
+    (() => {
+      const data = window.__ARCHITECTURE_VIEWER__;
+      const palette = ['#2358c7', '#d85d45', '#6c5bc4', '#b8841f', '#168276'];
+      const elements = {
+        brandLink: document.querySelector('#brandLink'),
+        catalogMeta: document.querySelector('#catalogMeta'),
+        catalogStatus: document.querySelector('#catalogStatus'),
+        entrySearch: document.querySelector('#entrySearch'),
+        groupLabel: document.querySelector('#groupLabel'),
+        groupList: document.querySelector('#groupList'),
+        manifestLink: document.querySelector('#manifestLink'),
+        openArtifact: document.querySelector('#openArtifact'),
+        openSource: document.querySelector('#openSource'),
+        plannedList: document.querySelector('#plannedList'),
+        plannedPanel: document.querySelector('#plannedPanel'),
+        previewFrame: document.querySelector('#previewFrame'),
+        projectDescription: document.querySelector('#projectDescription'),
+        projectName: document.querySelector('#projectName'),
+        readmeLink: document.querySelector('#readmeLink'),
+        refreshPreview: document.querySelector('#refreshPreview'),
+        stageEmpty: document.querySelector('#stageEmpty'),
+        stageEmptyText: document.querySelector('#stageEmptyText'),
+        stageEmptyTitle: document.querySelector('#stageEmptyTitle'),
+        stageState: document.querySelector('#stageState'),
+        viewerQuestion: document.querySelector('#viewerQuestion'),
+        viewerTitle: document.querySelector('#viewerTitle'),
+        viewerType: document.querySelector('#viewerType')
+      };
+      const state = { entryId: null, groupId: null, search: '' };
+      const activeEntries = data.groups.flatMap((group) => group.active_entries);
+      const findEntry = (id) => activeEntries.find((entry) => entry.id === id);
+      const findGroup = (id) => data.groups.find((group) => group.id === id);
+      const metadataFor = (entry) => [
+        entry.type,
+        entry.scope,
+        ...(entry.layers || []),
+        ...(entry.tags || []).slice(0, 3)
+      ].filter(Boolean).join(' · ');
+      const filteredEntries = (group) => {
+        const query = state.search.trim().toLowerCase();
+        if (!query) return group.active_entries;
+        return group.active_entries.filter((entry) => (
+          [entry.id, entry.title, entry.question, entry.type, entry.scope, ...(entry.tags || []), ...(entry.layers || [])]
+            .filter(Boolean).join(' ').toLowerCase().includes(query)
+        ));
+      };
+      const setUrl = (entryId, groupId, replace) => {
+        const url = new URL(window.location.href);
+        if (entryId) {
+          url.searchParams.set('diagram', entryId);
+          url.searchParams.delete('entry');
+          url.searchParams.delete('group');
+        } else {
+          url.searchParams.delete('diagram');
+          url.searchParams.delete('entry');
+          if (groupId) url.searchParams.set('group', groupId);
+          else url.searchParams.delete('group');
+        }
+        window.history[replace ? 'replaceState' : 'pushState']({ entryId, groupId }, '', url);
+      };
+      const selectGroup = (id, options = {}) => {
+        const group = findGroup(id);
+        if (!group) return;
+        const entry = group.active_entries[0] || null;
+        state.entryId = entry ? entry.id : null;
+        state.groupId = group.id;
+        if (options.updateHistory !== false) setUrl(state.entryId, state.groupId, options.replaceHistory);
+        renderNavigation();
+        renderCurrent();
+      };
+      const selectEntry = (id, options = {}) => {
+        const entry = findEntry(id);
+        if (!entry && findGroup(id)) return selectGroup(id, options);
+        const selected = entry || activeEntries[0];
+        if (!selected) return;
+        const group = data.groups.find((item) => item.active_entries.some((itemEntry) => itemEntry.id === selected.id));
+        state.entryId = selected.id;
+        state.groupId = group ? group.id : null;
+        if (options.updateHistory !== false) setUrl(state.entryId, null, options.replaceHistory);
+        renderNavigation();
+        renderCurrent();
+      };
+      const configureLink = (element, href) => {
+        if (href) {
+          element.href = href;
+          element.classList.remove('is-disabled');
+          element.removeAttribute('aria-disabled');
+          element.tabIndex = 0;
+        } else {
+          element.removeAttribute('href');
+          element.classList.add('is-disabled');
+          element.setAttribute('aria-disabled', 'true');
+          element.tabIndex = -1;
+        }
+      };
+      function renderNavigation() {
+        elements.groupList.replaceChildren();
+        data.groups.forEach((group, index) => {
+          const section = document.createElement('section');
+          section.className = 'axis-section' + (group.id === state.groupId ? ' is-active' : '');
+          section.style.setProperty('--lens', palette[index % palette.length]);
+          const button = document.createElement('button');
+          button.className = 'axis-button';
+          button.type = 'button';
+          button.innerHTML = '<span class="axis-code"></span><span class="axis-name"></span><span class="axis-count"></span>';
+          button.querySelector('.axis-code').textContent = String(index + 1).padStart(2, '0');
+          button.querySelector('.axis-name').textContent = group.label;
+          button.querySelector('.axis-count').textContent = group.active_entries.length + (group.planned_entries.length ? '+' + group.planned_entries.length : '');
+          button.setAttribute('aria-expanded', String(group.id === state.groupId || Boolean(state.search)));
+          button.addEventListener('click', () => {
+            const first = filteredEntries(group)[0] || group.active_entries[0];
+            if (first) selectEntry(first.id);
+            else selectGroup(group.id);
+          });
+          section.append(button);
+          const list = document.createElement('div');
+          list.className = 'entry-list';
+          filteredEntries(group).forEach((entry) => {
+            const item = document.createElement('button');
+            item.className = 'entry-item' + (entry.id === state.entryId ? ' is-selected' : '');
+            item.type = 'button';
+            item.innerHTML = '<span class="entry-id"></span><span class="entry-question"></span><span class="entry-meta"></span>';
+            item.querySelector('.entry-id').textContent = entry.title || entry.id;
+            item.querySelector('.entry-question').textContent = entry.question || entry.id;
+            item.querySelector('.entry-meta').textContent = metadataFor(entry);
+            item.setAttribute('aria-current', entry.id === state.entryId ? 'true' : 'false');
+            item.addEventListener('click', () => selectEntry(entry.id));
+            list.append(item);
+          });
+          if (state.search && filteredEntries(group).length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'entry-question';
+            empty.textContent = '没有匹配条目';
+            list.append(empty);
+          }
+          list.hidden = group.id !== state.groupId && !state.search;
+          section.append(list);
+          elements.groupList.append(section);
+        });
+      }
+      function renderPlanned(group) {
+        elements.plannedList.replaceChildren();
+        const planned = group ? group.planned_entries : [];
+        elements.plannedPanel.hidden = planned.length === 0;
+        planned.forEach((entry) => {
+          const chip = document.createElement('span');
+          chip.className = 'planned-chip';
+          chip.textContent = entry.title || entry.id;
+          chip.title = entry.question || entry.id;
+          elements.plannedList.append(chip);
+        });
+      }
+      function loadPreview(entry, reload) {
+        if (!entry || !entry.preview_href) {
+          elements.previewFrame.removeAttribute('src');
+          elements.previewFrame.style.display = 'none';
+          elements.stageEmpty.style.display = 'grid';
+          elements.stageState.textContent = 'source only';
+          elements.stageEmptyTitle.textContent = entry ? '暂无 HTML 预览' : '当前分类暂无 active 条目';
+          elements.stageEmptyText.textContent = entry ? '请通过上方按钮打开源文件。' : '已登记的条目会显示在下方维护队列。';
+          return;
+        }
+        elements.stageEmpty.style.display = 'none';
+        elements.previewFrame.style.display = 'block';
+        elements.stageState.textContent = 'loading';
+        const url = new URL(entry.preview_href, window.location.href);
+        url.searchParams.set('embed', '1');
+        if (reload) url.searchParams.set('viewer_reload', String(Date.now()));
+        elements.previewFrame.src = url.toString();
+      }
+      function renderCurrent() {
+        const group = findGroup(state.groupId) || data.groups[0];
+        const entry = findEntry(state.entryId);
+        if (!group) return;
+        const lens = palette[data.groups.indexOf(group) % palette.length];
+        document.documentElement.style.setProperty('--lens', lens);
+        elements.groupLabel.textContent = group.label;
+        elements.catalogStatus.textContent = data.generated_entry_count + ' active entries';
+        elements.catalogMeta.textContent = data.groups.length + ' groups · manifest synced';
+        renderPlanned(group);
+        if (!entry) {
+          elements.viewerTitle.textContent = (group.id + ' / QUEUE').toUpperCase();
+          elements.viewerQuestion.textContent = group.question || '当前分类暂无 active 条目。';
+          elements.viewerType.textContent = 'PLANNED';
+          configureLink(elements.openArtifact, null);
+          configureLink(elements.openSource, null);
+          loadPreview(null, false);
+          return;
+        }
+        elements.viewerTitle.textContent = entry.title || entry.id;
+        elements.viewerQuestion.textContent = entry.question || '';
+        elements.viewerType.textContent = String(entry.type || entry.kind || 'document').toUpperCase();
+        configureLink(elements.openArtifact, entry.artifact_href || entry.path_href || entry.preview_href);
+        configureLink(elements.openSource, entry.source_href || entry.artifact_href);
+        loadPreview(entry, false);
+      }
+      elements.projectName.textContent = data.project.name || 'Documentation Atlas';
+      elements.projectDescription.textContent = data.project.description || '按要回答的问题进入对应资料。';
+      elements.brandLink.href = data.links.readme || '#';
+      elements.readmeLink.href = data.links.readme || '#';
+      elements.manifestLink.href = data.links.manifest || '#';
+      elements.previewFrame.addEventListener('load', () => { elements.stageState.textContent = 'ready'; });
+      elements.previewFrame.addEventListener('error', () => { elements.stageState.textContent = 'unavailable'; });
+      elements.refreshPreview.addEventListener('click', () => loadPreview(findEntry(state.entryId), true));
+      elements.entrySearch.addEventListener('input', (event) => { state.search = event.target.value; renderNavigation(); });
+      window.addEventListener('popstate', () => {
+        const url = new URL(window.location.href);
+        const entryId = url.searchParams.get('diagram') || url.searchParams.get('entry');
+        if (findEntry(entryId)) selectEntry(entryId, { updateHistory: false });
+        else if (findGroup(url.searchParams.get('group'))) selectGroup(url.searchParams.get('group'), { updateHistory: false });
+        else selectEntry(null, { replaceHistory: true });
+      });
+      const initialUrl = new URL(window.location.href);
+      const initialEntryId = initialUrl.searchParams.get('diagram') || initialUrl.searchParams.get('entry');
+      if (findEntry(initialEntryId)) selectEntry(initialEntryId, { updateHistory: false });
+      else if (findGroup(initialUrl.searchParams.get('group'))) selectGroup(initialUrl.searchParams.get('group'), { updateHistory: false });
+      else selectEntry(null, { replaceHistory: true });
+    })();
+  </script>
+</body>
+</html>

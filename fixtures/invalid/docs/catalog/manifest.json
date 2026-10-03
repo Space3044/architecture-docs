@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "project": { "name": "Invalid Fixture" },
+  "groups": [
+    {
+      "id": "broken",
+      "label": "Broken",
+      "question": "What should fail?",
+      "entry_ids": ["broken", "future", "retired"]
+    }
+  ],
+  "entries": [
+    {
+      "id": "broken",
+      "title": "Broken entry",
+      "status": "active",
+      "source": "source.json",
+      "artifact": "missing.html"
+    },
+    {
+      "id": "broken",
+      "title": "Duplicate entry",
+      "status": "active",
+      "path": "source.json"
+    },
+    {
+      "id": "future",
+      "title": "Planned entry",
+      "status": "planned",
+      "path": "planned.html"
+    },
+    {
+      "id": "retired",
+      "title": "Retired entry",
+      "status": "retired",
+      "path": "removed.html"
+    }
+  ]
+}

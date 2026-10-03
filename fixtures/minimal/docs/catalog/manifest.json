@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "project": {
+    "name": "Example Project",
+    "description": "A small documentation fixture."
+  },
+  "groups": [
+    {
+      "id": "overview",
+      "label": "Overview",
+      "question": "What is documented?",
+      "entry_ids": ["overview"]
+    }
+  ],
+  "entries": [
+    {
+      "id": "overview",
+      "title": "Overview",
+      "question": "What is documented?",
+      "type": "document",
+      "status": "active",
+      "source": "overview.json",
+      "artifact": "overview.html"
+    }
+  ]
+}

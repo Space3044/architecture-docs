@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "docsRoot": "docs",
+  "manifest": "docs/catalog/manifest.json",
+  "viewer": {
+    "template": "default",
+    "output": "docs/index.html",
+    "readme": "docs/README.md"
+  },
+  "discovery": {
+    "include": ["**/*.md", "**/*.html", "**/*.json"],
+    "exclude": ["README.md", "index.html", "catalog/**"]
+  },
+  "providers": [],
+  "drift": { "enabled": false }
+}
