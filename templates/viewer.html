@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
   <meta name="description" content="文档图谱统一查看器">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3Crect width='1' height='1' fill='%232358c7'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%232358c7'/%3E%3Cstop offset='1' stop-color='%236c5bc4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpath d='M8 11l8 5 8-5M16 16v9M8 11v9m16-9v9M8 20l8 5 8-5' fill='none' stroke='%23fff' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='8' cy='11' r='2.4' fill='%23fff'/%3E%3Ccircle cx='24' cy='11' r='2.4' fill='%23fff'/%3E%3Ccircle cx='16' cy='16' r='2.6' fill='%23f2c35b'/%3E%3Ccircle cx='16' cy='25' r='2.4' fill='%23fff'/%3E%3C/svg%3E">
   <title>Documentation Atlas</title>
   <style>
     :root {
@@ -23,17 +23,24 @@
       font-synthesis: none;
     }
     * { box-sizing: border-box; }
-    html, body { min-width: 320px; min-height: 100%; margin: 0; }
+    html { min-width: 320px; background: var(--bg); }
     body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
       color: var(--ink);
-      background: linear-gradient(112deg, rgba(255, 255, 255, 0.46), transparent 38%), var(--bg);
+      background:
+        linear-gradient(112deg, rgba(255, 255, 255, 0.46), transparent 38%),
+        var(--bg);
     }
     button, input, select { font: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
     a { color: inherit; text-decoration: none; }
     a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
       outline: 2px solid var(--teal);
       outline-offset: 3px;
     }
+    .app-shell { min-height: 100vh; }
     .topbar {
       display: flex;
       align-items: center;
@@ -51,13 +58,11 @@
       height: 32px;
       flex: 0 0 auto;
       place-items: center;
-      color: #fff;
-      font-family: Georgia, serif;
-      font-size: 17px;
-      font-weight: 700;
-      background: var(--teal);
-      border-radius: 4px;
+      overflow: hidden;
+      background: transparent;
+      border-radius: 8px;
     }
+    .brand-mark svg { display: block; width: 100%; height: 100%; }
     .brand-kicker, .eyebrow, .axis-code, .stage-state, .catalog-status, .type-badge {
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       letter-spacing: 0.08em;
@@ -74,9 +79,10 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .top-actions { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
-    .catalog-status { padding: 6px 9px; border: 1px solid var(--line); border-radius: 999px; font-size: 9px; }
-    .text-link { padding: 8px 9px; border-radius: 8px; }
+    .top-actions { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; }
+    .catalog-status { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255, 255, 255, 0.36); }
+    .catalog-status::before { width: 7px; height: 7px; content: ""; background: var(--teal); border-radius: 50%; box-shadow: 0 0 0 3px rgba(35, 88, 199, 0.12); }
+    .text-link { padding: 8px 10px; color: var(--muted); border-radius: 8px; }
     .text-link:hover { color: var(--ink); background: rgba(255, 255, 255, 0.55); }
     .layout {
       display: grid;
@@ -87,24 +93,30 @@
       margin: 0 auto;
       padding: 20px 28px 28px;
     }
-    .workspace { grid-column: 2; min-width: 0; }
+    .sidebar, .workspace { background: transparent; }
+    .workspace { display: flex; grid-column: 2; grid-row: 1; min-width: 0; flex-direction: column; overflow: visible; }
+    .sidebar {
+      grid-column: 1;
+      grid-row: 1;
+    }
     .sidebar {
       display: flex;
-      grid-column: 1;
       flex-direction: column;
       min-height: 0;
+      align-self: start;
       max-height: calc(100svh - 38px);
-      padding-right: 6px;
+      padding: 0 6px 12px 0;
       position: sticky;
       top: 16px;
       overflow: auto;
       scrollbar-width: thin;
     }
-    .sidebar-intro { padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+    .sidebar-intro { padding: 0 0 14px; border-bottom: 1px solid var(--line); }
     .eyebrow { margin: 0 0 8px; color: var(--muted); font-size: 10px; font-weight: 700; }
     .sidebar-intro h2 { margin: 0 0 9px; font-family: Georgia, serif; font-size: 22px; line-height: 1.1; letter-spacing: -0.045em; }
     .sidebar-intro p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
-    .axis-list { display: grid; gap: 10px; padding-top: 14px; }
+    .axis-list { display: grid; gap: 10px; overflow: visible; padding: 14px 0 0; }
+    .axis-section { --lens: var(--teal); }
     .axis-button {
       display: grid;
       grid-template-columns: 25px minmax(0, 1fr) auto;
@@ -117,6 +129,8 @@
       cursor: pointer;
       background: transparent;
       border: 0;
+      border-radius: 0;
+      transition: 160ms ease;
     }
     .axis-button:hover, .axis-section.is-active .axis-button { color: var(--ink); }
     .axis-code { color: var(--lens, var(--teal)); font-size: 10px; font-weight: 800; }
@@ -125,6 +139,7 @@
     .entry-list { display: grid; gap: 3px; margin: 5px 0 0 25px; padding-left: 11px; border-left: 1px solid var(--line); }
     .entry-list[hidden] { display: none; }
     .entry-item {
+      position: relative;
       display: grid;
       gap: 2px;
       width: 100%;
@@ -135,65 +150,110 @@
       background: transparent;
       border: 1px solid transparent;
       border-radius: 4px;
+      transition: 160ms ease;
     }
     .entry-item:hover { color: var(--ink); background: rgba(255,255,255,.48); }
     .entry-item.is-selected { color: var(--ink); background: #fff; border-color: var(--line-strong); box-shadow: 0 2px 0 rgba(32,43,44,.04); }
-    .entry-id { overflow: hidden; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 10px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
-    .entry-question { display: -webkit-box; overflow: hidden; color: var(--faint); font-size: 11px; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+    .entry-item.is-selected::before { position: absolute; top: 13px; left: -19px; width: 7px; height: 7px; content: ""; background: var(--lens, var(--teal)); border: 2px solid var(--bg); border-radius: 50%; }
+    .entry-id { overflow: hidden; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.02em; text-overflow: ellipsis; white-space: nowrap; }
+    .entry-question { display: -webkit-box; overflow: hidden; color: var(--faint); font-size: 11px; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 1; }
     .entry-meta { overflow: hidden; color: var(--faint); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 9px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
-    .sidebar-foot { display: grid; gap: 8px; margin-top: auto; padding-top: 13px; color: var(--faint); font-size: 10.5px; line-height: 1.5; border-top: 1px solid var(--line); }
-    .sidebar-foot strong { color: var(--muted); }
-    .workspace-head { padding-bottom: 12px; }
-    .crumbs { display: flex; gap: 8px; margin-bottom: 8px; color: var(--muted); font-size: 12px; }
+    .sidebar-foot { display: grid; gap: 8px; margin-top: auto; padding: 13px 0 4px; color: var(--faint); font-size: 10.5px; line-height: 1.5; border-top: 1px solid var(--line); }
+    .sidebar-foot strong { color: var(--muted); font-weight: 700; }
+    .atlas-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+    .atlas-visual { display: block; width: 100%; height: auto; margin: 17px 0 0; overflow: visible; }
+    .atlas-visual.stage-empty-visual { width: min(100%, 360px); margin: 0 auto 18px; }
+    .atlas-grid-line { fill: none; stroke: var(--line); stroke-width: 1; }
+    .atlas-route { fill: none; stroke: var(--line-strong); stroke-width: 1.2; stroke-dasharray: 2.5 3.5; }
+    .atlas-surface { fill: var(--panel); stroke: var(--line-strong); stroke-width: 1; }
+    .atlas-surface-soft { fill: rgba(255, 255, 255, 0.42); stroke: var(--line); stroke-width: 1; }
+    .atlas-teal { fill: var(--teal); }
+    .atlas-coral { fill: var(--coral); }
+    .atlas-violet { fill: var(--violet); }
+    .atlas-amber { fill: var(--amber); }
+    .atlas-ink { fill: var(--ink); }
+    .atlas-glow { fill: var(--teal); opacity: 0.1; }
+    .stage-empty-content { display: grid; justify-items: center; max-width: 440px; text-align: center; }
+    .stage-empty-content strong { font-size: 14px; }
+    .stage-empty-content p { margin: 8px 0 0; line-height: 1.6; }
+    .workspace-head { padding: 0 0 12px; }
+    .crumbs { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--muted); font-size: 12px; }
     .crumbs .current { color: var(--lens, var(--teal)); font-weight: 700; }
     .viewer-title-row { display: flex; align-items: start; justify-content: space-between; gap: 16px; }
     .viewer-title-row h2 { margin: 0; font-family: Georgia, serif; font-size: clamp(26px, 2.6vw, 38px); line-height: 1.05; letter-spacing: -0.06em; }
     .viewer-question { max-width: 760px; margin: 7px 0 0; color: var(--muted); font-size: 14px; line-height: 1.65; }
     .type-badge { flex: 0 0 auto; padding: 7px 9px; color: var(--lens, var(--teal)); font-size: 10px; font-weight: 800; border: 1px solid var(--lens, var(--teal)); border-radius: 3px; }
+    .mobile-index-link, .mobile-picker { display: none; }
     .toolbar { display: flex; align-items: center; gap: 7px; padding: 10px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
     .search-box { display: flex; align-items: center; min-width: 160px; max-width: 300px; flex: 1; gap: 8px; padding: 8px 10px; color: var(--muted); background: rgba(255,255,255,.72); border: 1px solid var(--line); border-radius: 4px; }
     .search-box input { width: 100%; min-width: 0; color: var(--ink); background: transparent; border: 0; outline: 0; }
-    .tool-button { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; padding: 0 12px; color: var(--muted); font-size: 12px; cursor: pointer; background: transparent; border: 1px solid var(--line); border-radius: 4px; }
+    .tool-button { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; padding: 0 12px; color: var(--muted); font-size: 12px; cursor: pointer; background: transparent; border: 1px solid var(--line); border-radius: 4px; transition: 160ms ease; }
     .tool-button:hover { color: var(--ink); border-color: var(--line-strong); background: rgba(255,255,255,.54); }
     .tool-button.primary { color: #fff; background: var(--ink); border-color: var(--ink); font-weight: 800; }
     .tool-button.is-disabled { opacity: .42; pointer-events: none; }
-    .stage { display: flex; min-height: clamp(440px, calc(100svh - 252px), 680px); margin-top: 12px; flex-direction: column; overflow: hidden; background: #fbfcfa; border: 1px solid var(--line-strong); border-radius: 4px; box-shadow: var(--shadow); }
+    .stage-wrap { padding: 12px 0 0; }
+    .stage { position: relative; display: flex; min-height: clamp(440px, calc(100svh - 252px), 620px); flex-direction: column; overflow: hidden; background: #fbfcfa; border: 1px solid var(--line-strong); border-radius: 4px; box-shadow: var(--shadow); }
+    .stage.is-content-sized { min-height: 0; height: auto; }
     .stage-topline { display: flex; align-items: center; justify-content: space-between; min-height: 30px; padding: 0 13px; color: #6d7b7e; background: #f5f6f2; border-bottom: 1px solid var(--line); }
     .stage-state { font-size: 9px; font-weight: 800; }
     .stage-hint { font-size: 11px; }
-    .preview-frame { display: block; width: 100%; min-height: 0; flex: 1 1 auto; background: #fbfcfa; border: 0; }
-    .stage-empty { display: none; min-height: 0; flex: 1 1 auto; place-items: center; padding: 40px; color: #6d7b7e; text-align: center; }
+    .preview-frame { display: block; width: 100%; height: auto; min-height: 0; flex: 1 1 0; background: #fbfcfa; border: 0; }
+    .stage.is-content-sized .preview-frame { flex: 0 0 auto; }
+    .stage-empty { display: none; min-height: 0; flex: 1 1 0; place-items: center; padding: 40px; color: #6d7b7e; text-align: center; background: #fbfcfa; }
     .planned-panel { display: grid; gap: 10px; margin: 18px 0 28px; padding: 14px 16px; color: var(--muted); background: rgba(255,255,255,.34); border: 1px dashed var(--line-strong); border-radius: 4px; }
     .planned-panel[hidden] { display: none; }
     .planned-heading { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; }
     .planned-heading strong { color: var(--ink); }
     .planned-list { display: flex; flex-wrap: wrap; gap: 7px; }
     .planned-chip { padding: 5px 8px; color: var(--faint); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 10px; background: rgba(255,255,255,.62); border: 1px solid var(--line); border-radius: 3px; }
+    .no-results { padding: 12px 10px; color: var(--faint); font-size: 12px; }
     @media (max-width: 980px) {
       .topbar { padding: 16px 18px 14px; }
       .layout { display: flex; min-height: auto; flex-direction: column; gap: 26px; padding: 18px 18px 26px; }
       .workspace { order: 1; }
-      .sidebar { order: 2; max-height: none; position: static; overflow: visible; }
-      .axis-list { display: flex; flex-wrap: wrap; gap: 6px; }
+      .sidebar { order: 2; grid-column: auto; grid-row: auto; max-height: none; min-height: auto; position: static; overflow: visible; padding: 0 0 2px; }
+      .axis-list { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 12px; }
       .axis-section { display: contents; }
-      .axis-button { flex: 1 1 calc(25% - 6px); min-width: 0; padding: 8px; background: rgba(255,255,255,.28); border: 1px solid transparent; border-radius: 4px; }
+      .axis-button { flex: 1 1 calc(25% - 6px); min-width: 0; gap: 6px; padding: 8px; background: rgba(255,255,255,.28); border: 1px solid transparent; border-radius: 4px; }
       .axis-section.is-active .axis-button { background: #fff; border-color: var(--line-strong); }
       .axis-section.is-active .entry-list { flex: 0 0 100%; order: 1; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; margin: 2px 0 0; padding: 9px 0 0; border-top: 1px solid var(--line); border-left: 0; }
-      .sidebar-foot { margin-top: 10px; }
+      .sidebar-foot { margin-top: 10px; padding-top: 10px; }
+      .workspace-head { padding-bottom: 10px; }
       .stage { min-height: clamp(440px, 60svh, 560px); }
+      .mobile-picker { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px; margin-top: 14px; padding: 10px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+      .mobile-picker-label { color: var(--muted); font-size: 11px; font-weight: 700; white-space: nowrap; }
+      .mobile-picker select { width: 100%; min-width: 0; min-height: 38px; padding: 0 30px 0 10px; color: var(--ink); background: #fff; border: 1px solid var(--line-strong); border-radius: 4px; }
+      .mobile-index-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 0; color: var(--lens, var(--teal)); font-size: 12px; font-weight: 700; }
+      .mobile-index-link::after { content: "↓"; font-size: 14px; }
     }
     @media (max-width: 620px) {
+      .topbar { align-items: flex-start; flex-direction: column; gap: 14px; padding-left: 14px; padding-right: 14px; }
+      .top-actions { width: 100%; justify-content: space-between; }
       .top-actions .text-link { display: none; }
-      .topbar { gap: 10px; padding-left: 14px; padding-right: 14px; }
-      .layout { padding-left: 14px; padding-right: 14px; }
-      .viewer-title-row { gap: 10px; }
+      .layout { padding: 14px 10px 24px; }
+      .workspace { min-width: 0; }
+      .viewer-title-row { flex-direction: column; gap: 10px; }
       .viewer-title-row h2 { font-size: 28px; }
       .viewer-question { font-size: 13px; }
-      .toolbar { flex-wrap: wrap; }
-      .search-box { max-width: none; flex-basis: 100%; }
+      .toolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: stretch; padding-inline: 0; }
+      .search-box { grid-column: 1 / -1; min-width: 0; max-width: none; order: 0; }
+      .toolbar .tool-button { padding-inline: 9px; }
       .axis-button { flex-basis: calc(50% - 6px); }
       .axis-section.is-active .entry-list { grid-template-columns: 1fr; }
-      .stage { min-height: 440px; }
+      .stage-wrap { padding-inline: 0; }
+      .planned-panel { margin-inline: 0; }
+      .stage { min-height: 460px; }
+      .stage-hint { display: none; }
+    }
+    @media (min-width: 981px) {
+      html, body { height: 100%; overflow: hidden; }
+      .topbar, .layout { width: 100%; }
+      .app-shell { display: flex; height: 100svh; flex-direction: column; overflow: hidden; }
+      .layout { flex: 1 1 auto; height: auto; min-height: 0; overflow: hidden; }
+      .sidebar { height: 100%; max-height: none; }
+      .workspace { min-height: 0; }
+      .stage-wrap { display: flex; min-height: 0; flex: 1 1 0; }
+      .stage { width: 100%; min-height: 0; height: 100%; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
@@ -201,66 +261,133 @@
   </style>
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" id="brandLink" href="#">
-      <span class="brand-mark" aria-hidden="true">A</span>
-      <span>
-        <span class="brand-kicker">Documentation knowledge base</span>
-        <h1 id="projectName">Documentation Atlas</h1>
-      </span>
-    </a>
-    <div class="top-actions">
-      <span class="catalog-status" id="catalogStatus">catalog ready</span>
-      <a class="text-link" id="readmeLink" href="#">阅读说明</a>
-      <a class="text-link" id="manifestLink" href="#" target="_blank" rel="noreferrer">目录清单</a>
-    </div>
-  </header>
-  <main class="layout">
-    <section class="workspace" aria-label="文档预览区">
-      <div class="workspace-head">
-        <div class="crumbs"><span>ATLAS</span><span>/</span><span class="current" id="groupLabel">Documents</span></div>
-        <div class="viewer-title-row">
-          <div>
-            <h2 id="viewerTitle">DOCUMENTATION</h2>
-            <p class="viewer-question" id="viewerQuestion"></p>
+  <div class="app-shell">
+    <svg class="atlas-defs" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="atlas-icon-gradient" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="var(--teal)"></stop>
+          <stop offset="1" stop-color="var(--violet)"></stop>
+        </linearGradient>
+        <symbol id="atlas-icon-symbol" viewBox="0 0 32 32">
+          <rect width="32" height="32" rx="8" fill="url(#atlas-icon-gradient)"></rect>
+          <path d="M8 11l8 5 8-5M16 16v9M8 11v9m16-9v9M8 20l8 5 8-5" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
+          <circle cx="8" cy="11" r="2.4" fill="#fff"></circle>
+          <circle cx="24" cy="11" r="2.4" fill="#fff"></circle>
+          <circle cx="16" cy="16" r="2.6" fill="#f2c35b"></circle>
+          <circle cx="16" cy="25" r="2.4" fill="#fff"></circle>
+        </symbol>
+        <linearGradient id="atlas-orbit" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="var(--teal)"></stop>
+          <stop offset="0.55" stop-color="var(--violet)"></stop>
+          <stop offset="1" stop-color="var(--coral)"></stop>
+        </linearGradient>
+        <symbol id="atlas-visual-symbol" viewBox="0 0 220 122">
+          <path class="atlas-grid-line" d="M10 96H210M20 80H200M30 64H190M40 48H180M50 32H170"></path>
+          <path class="atlas-grid-line" d="M28 22L78 104M62 16L103 104M100 12L125 104M140 16L143 104M178 22L163 104"></path>
+          <path class="atlas-route" d="M27 73C48 73 49 50 70 50M150 51C169 51 172 35 194 35M150 77C168 77 177 90 198 90M70 86C51 86 48 101 28 101"></path>
+          <ellipse class="atlas-glow" cx="110" cy="61" rx="50" ry="43"></ellipse>
+          <rect class="atlas-surface-soft" x="18" y="58" width="35" height="29" rx="5"></rect>
+          <rect class="atlas-surface-soft" x="168" y="20" width="34" height="29" rx="5"></rect>
+          <rect class="atlas-surface-soft" x="172" y="76" width="30" height="24" rx="5"></rect>
+          <rect class="atlas-surface" x="68" y="20" width="84" height="72" rx="8"></rect>
+          <rect class="atlas-surface-soft" x="80" y="33" width="41" height="7" rx="3.5"></rect>
+          <rect class="atlas-surface-soft" x="80" y="48" width="58" height="5" rx="2.5"></rect>
+          <rect class="atlas-surface-soft" x="80" y="59" width="43" height="5" rx="2.5"></rect>
+          <rect class="atlas-surface-soft" x="80" y="70" width="51" height="5" rx="2.5"></rect>
+          <circle class="atlas-teal" cx="30" cy="72" r="4"></circle>
+          <circle class="atlas-coral" cx="43" cy="80" r="3"></circle>
+          <circle class="atlas-violet" cx="178" cy="34" r="4"></circle>
+          <circle class="atlas-amber" cx="191" cy="42" r="3"></circle>
+          <circle class="atlas-teal" cx="183" cy="88" r="4"></circle>
+          <circle class="atlas-coral" cx="194" cy="94" r="3"></circle>
+          <circle class="atlas-ink" cx="133" cy="42" r="3"></circle>
+          <circle class="atlas-amber" cx="132" cy="72" r="4"></circle>
+          <path d="M110 9C153 9 185 25 185 52C185 79 153 105 110 105C67 105 35 79 35 52C35 25 67 9 110 9Z" fill="none" stroke="url(#atlas-orbit)" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="1 5"></path>
+        </symbol>
+      </defs>
+    </svg>
+    <header class="topbar">
+      <a class="brand" id="brandLink" href="#">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><use href="#atlas-icon-symbol"></use></svg></span>
+        <span>
+          <span class="brand-kicker">Documentation knowledge base</span>
+          <h1 id="projectName">Documentation Atlas</h1>
+        </span>
+      </a>
+      <div class="top-actions">
+        <span class="catalog-status" id="catalogStatus">catalog ready</span>
+        <a class="text-link" id="readmeLink" href="#">阅读说明</a>
+        <a class="text-link" id="manifestLink" href="#" target="_blank" rel="noreferrer">目录清单</a>
+      </div>
+    </header>
+    <main class="layout">
+      <section class="workspace" aria-label="文档预览区">
+        <div class="workspace-head">
+          <div class="crumbs"><span>ATLAS</span><span>/</span><span class="current" id="groupLabel">Documents</span></div>
+          <div class="viewer-title-row">
+            <div>
+              <h2 id="viewerTitle">DOCUMENTATION</h2>
+              <p class="viewer-question" id="viewerQuestion"></p>
+            </div>
+            <span class="type-badge" id="viewerType">DOCUMENT</span>
           </div>
-          <span class="type-badge" id="viewerType">DOCUMENT</span>
+          <div class="mobile-picker" id="mobilePicker">
+            <label class="mobile-picker-label" for="mobileEntryPicker">切换文档</label>
+            <select id="mobileEntryPicker" aria-label="选择文档"></select>
+          </div>
+          <a class="mobile-index-link" href="#entry-index">浏览其他文档</a>
         </div>
-      </div>
-      <div class="toolbar">
-        <label class="search-box" for="entrySearch"><span aria-hidden="true">⌕</span><input id="entrySearch" type="search" placeholder="搜索文档名称或问题" autocomplete="off"></label>
-        <button class="tool-button" id="refreshPreview" type="button">重新载入</button>
-        <a class="tool-button primary" id="openArtifact" href="#" target="_blank" rel="noreferrer">完整预览</a>
-        <a class="tool-button" id="openSource" href="#" target="_blank" rel="noreferrer">打开源文件</a>
-      </div>
-      <div class="stage">
-        <div class="stage-topline"><span class="stage-state" id="stageState">loading</span><span class="stage-hint">单一内容区 · 原始文件可单独打开</span></div>
-        <iframe class="preview-frame" id="previewFrame" title="文档预览" loading="eager" referrerpolicy="no-referrer"></iframe>
-        <div class="stage-empty" id="stageEmpty"><div><strong id="stageEmptyTitle">暂无 HTML 预览</strong><p id="stageEmptyText">请打开源文件阅读该条目。</p></div></div>
-      </div>
-    </section>
-    <aside class="sidebar" id="entryIndex" aria-label="文档分类">
-      <div class="sidebar-intro">
-        <p class="eyebrow">Browse by question</p>
-        <h2>文档索引</h2>
-        <p id="projectDescription">按要回答的问题进入对应资料。</p>
-      </div>
-      <nav class="axis-list" id="groupList"></nav>
-      <div class="planned-panel" id="plannedPanel" hidden>
-        <div class="planned-heading"><strong>维护队列</strong><span>已登记，尚未生成预览</span></div>
-        <div class="planned-list" id="plannedList"></div>
-      </div>
-      <div class="sidebar-foot"><span><strong>快捷方式</strong> · 搜索框支持名称、问题和标签。</span><span id="catalogMeta">由 manifest 生成</span></div>
-    </aside>
-  </main>
+        <div class="toolbar">
+          <label class="search-box" for="entrySearch"><span aria-hidden="true">⌕</span><input id="entrySearch" type="search" placeholder="搜索文档名称或问题" autocomplete="off"></label>
+          <button class="tool-button" id="refreshPreview" type="button">重新载入</button>
+          <a class="tool-button primary" id="openArtifact" href="#" target="_blank" rel="noreferrer">完整预览</a>
+          <a class="tool-button" id="openSource" href="#" target="_blank" rel="noreferrer">打开源文件</a>
+        </div>
+        <div class="stage-wrap">
+          <div class="stage" id="previewStage">
+            <div class="stage-topline"><span class="stage-state" id="stageState">loading</span><span class="stage-hint">单一内容区 · 原始文件可单独打开</span></div>
+            <iframe class="preview-frame" id="previewFrame" title="文档预览" loading="eager" referrerpolicy="no-referrer"></iframe>
+            <div class="stage-empty" id="stageEmpty"><div class="stage-empty-content"><svg class="atlas-visual stage-empty-visual" viewBox="0 0 220 122" aria-hidden="true" focusable="false"><use href="#atlas-visual-symbol"></use></svg><strong id="stageEmptyTitle">暂无 HTML 预览</strong><p id="stageEmptyText">请打开源文件阅读该条目。</p></div></div>
+          </div>
+        </div>
+      </section>
+      <aside class="sidebar" id="entry-index" aria-label="文档分类">
+        <div class="sidebar-intro">
+          <p class="eyebrow">Browse by question</p>
+          <h2>文档索引</h2>
+          <p id="projectDescription">按要回答的问题进入对应资料。</p>
+          <svg class="atlas-visual" viewBox="0 0 220 122" aria-hidden="true" focusable="false"><use href="#atlas-visual-symbol"></use></svg>
+        </div>
+        <nav class="axis-list" id="groupList"></nav>
+        <div class="planned-panel" id="plannedPanel" hidden>
+          <div class="planned-heading"><strong>维护队列</strong><span>已登记，尚未生成预览</span></div>
+          <div class="planned-list" id="plannedList"></div>
+        </div>
+        <div class="sidebar-foot"><span><strong>快捷方式</strong> · 搜索框支持名称、问题和标签。</span><span id="catalogMeta">由 manifest 生成</span></div>
+      </aside>
+    </main>
+  </div>
   <!-- ARCHITECTURE_VIEWER_CATALOG_SHA256:__ARCHITECTURE_VIEWER_CATALOG_SHA256__ -->
   <script>
     window.__ARCHITECTURE_VIEWER__ = __ARCHITECTURE_VIEWER_DATA__;
   </script>
   <script>
     (() => {
-      const data = window.__ARCHITECTURE_VIEWER__;
+      const data = window.__ARCHITECTURE_VIEWER__ || {};
+      const groups = Array.isArray(data.groups) ? data.groups : [];
+      const project = data.project || {};
+      const links = data.links || {};
       const palette = ['#2358c7', '#d85d45', '#6c5bc4', '#b8841f', '#168276'];
+      const typeLabels = {
+        architecture: 'ARCHITECTURE',
+        component: 'COMPONENT',
+        dataflow: 'DATAFLOW',
+        document: 'DOCUMENT',
+        infrastructure: 'INFRASTRUCTURE',
+        lifecycle: 'LIFECYCLE',
+        sequence: 'SEQUENCE',
+        workflow: 'WORKFLOW'
+      };
       const elements = {
         brandLink: document.querySelector('#brandLink'),
         catalogMeta: document.querySelector('#catalogMeta'),
@@ -269,11 +396,13 @@
         groupLabel: document.querySelector('#groupLabel'),
         groupList: document.querySelector('#groupList'),
         manifestLink: document.querySelector('#manifestLink'),
+        mobileEntryPicker: document.querySelector('#mobileEntryPicker'),
         openArtifact: document.querySelector('#openArtifact'),
         openSource: document.querySelector('#openSource'),
         plannedList: document.querySelector('#plannedList'),
         plannedPanel: document.querySelector('#plannedPanel'),
         previewFrame: document.querySelector('#previewFrame'),
+        previewStage: document.querySelector('#previewStage'),
         projectDescription: document.querySelector('#projectDescription'),
         projectName: document.querySelector('#projectName'),
         readmeLink: document.querySelector('#readmeLink'),
@@ -287,24 +416,33 @@
         viewerType: document.querySelector('#viewerType')
       };
       const state = { entryId: null, groupId: null, search: '' };
-      const activeEntries = data.groups.flatMap((group) => group.active_entries);
+      const activeEntries = groups.flatMap((group) => Array.isArray(group.active_entries) ? group.active_entries : []);
+      let frameFitObserver = null;
+      let frameFitFrame = 0;
+
       const findEntry = (id) => activeEntries.find((entry) => entry.id === id);
-      const findGroup = (id) => data.groups.find((group) => group.id === id);
+      const findGroup = (id) => groups.find((group) => group.id === id);
+      const entriesFor = (group, key) => Array.isArray(group?.[key]) ? group[key] : [];
+      const typeLabelFor = (entry) => {
+        const type = String(entry.type || entry.kind || 'document').toLowerCase();
+        return typeLabels[type] || type.toUpperCase();
+      };
       const metadataFor = (entry) => [
-        entry.type,
+        entry.type || entry.kind,
         entry.scope,
-        ...(entry.layers || []),
-        ...(entry.tags || []).slice(0, 3)
+        ...(Array.isArray(entry.layers) ? entry.layers : []),
+        ...(Array.isArray(entry.tags) ? entry.tags.slice(0, 3) : [])
       ].filter(Boolean).join(' · ');
       const filteredEntries = (group) => {
+        const entries = entriesFor(group, 'active_entries');
         const query = state.search.trim().toLowerCase();
-        if (!query) return group.active_entries;
-        return group.active_entries.filter((entry) => (
-          [entry.id, entry.title, entry.question, entry.type, entry.scope, ...(entry.tags || []), ...(entry.layers || [])]
+        if (!query) return entries;
+        return entries.filter((entry) => (
+          [entry.id, entry.title, entry.question, entry.type, entry.kind, entry.scope, ...(entry.tags || []), ...(entry.layers || [])]
             .filter(Boolean).join(' ').toLowerCase().includes(query)
         ));
       };
-      const setUrl = (entryId, groupId, replace) => {
+      const setUrl = (entryId, groupId, replace = false) => {
         const url = new URL(window.location.href);
         if (entryId) {
           url.searchParams.set('diagram', entryId);
@@ -321,8 +459,8 @@
       const selectGroup = (id, options = {}) => {
         const group = findGroup(id);
         if (!group) return;
-        const entry = group.active_entries[0] || null;
-        state.entryId = entry ? entry.id : null;
+        const entry = filteredEntries(group)[0] || entriesFor(group, 'active_entries')[0] || null;
+        state.entryId = entry?.id || null;
         state.groupId = group.id;
         if (options.updateHistory !== false) setUrl(state.entryId, state.groupId, options.replaceHistory);
         renderNavigation();
@@ -332,10 +470,13 @@
         const entry = findEntry(id);
         if (!entry && findGroup(id)) return selectGroup(id, options);
         const selected = entry || activeEntries[0];
-        if (!selected) return;
-        const group = data.groups.find((item) => item.active_entries.some((itemEntry) => itemEntry.id === selected.id));
+        if (!selected) {
+          if (groups[0]) selectGroup(groups[0].id, options);
+          return;
+        }
+        const group = groups.find((item) => entriesFor(item, 'active_entries').some((itemEntry) => itemEntry.id === selected.id));
         state.entryId = selected.id;
-        state.groupId = group ? group.id : null;
+        state.groupId = group?.id || null;
         if (options.updateHistory !== false) setUrl(state.entryId, null, options.replaceHistory);
         renderNavigation();
         renderCurrent();
@@ -355,7 +496,9 @@
       };
       function renderNavigation() {
         elements.groupList.replaceChildren();
-        data.groups.forEach((group, index) => {
+        groups.forEach((group, index) => {
+          const active = entriesFor(group, 'active_entries');
+          const planned = entriesFor(group, 'planned_entries');
           const section = document.createElement('section');
           section.className = 'axis-section' + (group.id === state.groupId ? ' is-active' : '');
           section.style.setProperty('--lens', palette[index % palette.length]);
@@ -364,11 +507,13 @@
           button.type = 'button';
           button.innerHTML = '<span class="axis-code"></span><span class="axis-name"></span><span class="axis-count"></span>';
           button.querySelector('.axis-code').textContent = String(index + 1).padStart(2, '0');
-          button.querySelector('.axis-name').textContent = group.label;
-          button.querySelector('.axis-count').textContent = group.active_entries.length + (group.planned_entries.length ? '+' + group.planned_entries.length : '');
-          button.setAttribute('aria-expanded', String(group.id === state.groupId || Boolean(state.search)));
+          button.querySelector('.axis-name').textContent = group.label || group.id;
+          button.querySelector('.axis-count').textContent = active.length + (planned.length ? '+' + planned.length : '');
+          button.title = planned.length ? `${active.length} active · ${planned.length} planned` : `${active.length} active`;
+          const showList = group.id === state.groupId || Boolean(state.search);
+          button.setAttribute('aria-expanded', String(showList));
           button.addEventListener('click', () => {
-            const first = filteredEntries(group)[0] || group.active_entries[0];
+            const first = filteredEntries(group)[0] || active[0];
             if (first) selectEntry(first.id);
             else selectGroup(group.id);
           });
@@ -379,6 +524,7 @@
             const item = document.createElement('button');
             item.className = 'entry-item' + (entry.id === state.entryId ? ' is-selected' : '');
             item.type = 'button';
+            item.style.setProperty('--lens', palette[index % palette.length]);
             item.innerHTML = '<span class="entry-id"></span><span class="entry-question"></span><span class="entry-meta"></span>';
             item.querySelector('.entry-id').textContent = entry.title || entry.id;
             item.querySelector('.entry-question').textContent = entry.question || entry.id;
@@ -389,33 +535,132 @@
           });
           if (state.search && filteredEntries(group).length === 0) {
             const empty = document.createElement('div');
-            empty.className = 'entry-question';
+            empty.className = 'no-results';
             empty.textContent = '没有匹配条目';
             list.append(empty);
           }
-          list.hidden = group.id !== state.groupId && !state.search;
+          list.hidden = !showList;
           section.append(list);
           elements.groupList.append(section);
         });
+        renderMobilePicker();
+      }
+      function renderMobilePicker() {
+        const picker = elements.mobileEntryPicker;
+        if (!picker) return;
+        picker.replaceChildren();
+        groups.forEach((group) => {
+          const optionGroup = document.createElement('optgroup');
+          optionGroup.label = group.label || group.id;
+          entriesFor(group, 'active_entries').forEach((entry) => {
+            const option = document.createElement('option');
+            option.value = entry.id;
+            option.textContent = `${entry.title || entry.id}${entry.question ? ` · ${entry.question}` : ''}`;
+            option.selected = entry.id === state.entryId;
+            optionGroup.append(option);
+          });
+          const planned = entriesFor(group, 'planned_entries');
+          if (planned.length) {
+            const option = document.createElement('option');
+            option.disabled = true;
+            option.textContent = `维护队列 · ${planned.map((entry) => entry.title || entry.id).join('、')}`;
+            optionGroup.append(option);
+          }
+          if (optionGroup.children.length) picker.append(optionGroup);
+        });
+        picker.value = state.entryId || '';
       }
       function renderPlanned(group) {
         elements.plannedList.replaceChildren();
-        const planned = group ? group.planned_entries : [];
+        const planned = entriesFor(group, 'planned_entries');
         elements.plannedPanel.hidden = planned.length === 0;
         planned.forEach((entry) => {
           const chip = document.createElement('span');
           chip.className = 'planned-chip';
           chip.textContent = entry.title || entry.id;
-          chip.title = entry.question || entry.id;
+          chip.title = [entry.question, metadataFor(entry)].filter(Boolean).join('\n');
           elements.plannedList.append(chip);
         });
       }
-      function loadPreview(entry, reload) {
+      function installEmbeddedFit() {
+        const frame = elements.previewFrame;
+        const frameDocument = frame.contentDocument;
+        if (!frameDocument) return;
+        const container = frameDocument.querySelector('.diagram-container, [data-diagram-container]');
+        if (!container) return;
+        const styleId = 'architecture-docs-embedded-fit';
+        if (!frameDocument.getElementById(styleId)) {
+          const style = frameDocument.createElement('style');
+          style.id = styleId;
+          style.textContent = `
+            html[data-embed="true"] { height: 100%; overflow: hidden; }
+            html[data-embed="true"] body { display: flex; height: 100%; min-height: 0; overflow: hidden; }
+            html[data-embed="true"] .container { display: flex; flex: 1 1 auto; flex-direction: column; height: 100%; min-height: 0; width: 100%; }
+            html[data-embed="true"] .diagram-container,
+            html[data-embed="true"] [data-diagram-container] { display: flex; flex: 1 1 auto; align-items: center; justify-content: center; min-height: 0; height: auto; width: 100%; overflow: hidden; }
+            html[data-embed="true"] .diagram-container > svg,
+            html[data-embed="true"] [data-diagram-container] > svg { flex: 0 1 auto; min-width: 0 !important; max-width: 100%; max-height: 100%; margin: 0; object-fit: contain; }
+          `;
+          (frameDocument.head || frameDocument.documentElement)?.append(style);
+        }
+        const svg = container.querySelector('svg');
+        const viewBox = svg?.viewBox?.baseVal;
+        if (!svg || !viewBox || viewBox.width <= 0 || viewBox.height <= 0) return;
+        const view = frameDocument.defaultView;
+        const containerStyle = view?.getComputedStyle(container);
+        if (!containerStyle) return;
+        const horizontalInset = parseFloat(containerStyle.paddingLeft || '0')
+          + parseFloat(containerStyle.paddingRight || '0')
+          + parseFloat(containerStyle.borderLeftWidth || '0')
+          + parseFloat(containerStyle.borderRightWidth || '0');
+        const verticalInset = parseFloat(containerStyle.paddingTop || '0')
+          + parseFloat(containerStyle.paddingBottom || '0')
+          + parseFloat(containerStyle.borderTopWidth || '0')
+          + parseFloat(containerStyle.borderBottomWidth || '0');
+        const availableWidth = Math.max(1, container.clientWidth - horizontalInset);
+        const availableHeight = Math.max(1, container.clientHeight - verticalInset);
+        const compactViewport = window.matchMedia('(max-width: 620px)').matches;
+        const scale = compactViewport
+          ? availableWidth / viewBox.width
+          : Math.min(availableWidth / viewBox.width, availableHeight / viewBox.height);
+        if (compactViewport) {
+          const frameWidth = Math.max(1, frame.clientWidth);
+          const embeddedPadding = horizontalInset || 16;
+          const contentWidth = Math.max(1, frameWidth - embeddedPadding);
+          const contentHeight = Math.max(220, Math.ceil(contentWidth * viewBox.height / viewBox.width));
+          frame.style.height = `${contentHeight + (verticalInset || 16)}px`;
+          frame.style.flex = '0 0 auto';
+          elements.previewStage.classList.add('is-content-sized');
+        } else {
+          frame.style.height = '';
+          frame.style.flex = '';
+          elements.previewStage.classList.remove('is-content-sized');
+        }
+        svg.style.width = `${Math.max(1, Math.floor(viewBox.width * scale))}px`;
+        svg.style.height = `${Math.max(1, Math.floor(viewBox.height * scale))}px`;
+        svg.style.minWidth = '0';
+        svg.style.maxWidth = '100%';
+        svg.style.maxHeight = '100%';
+      }
+      function scheduleEmbeddedFit() {
+        if (frameFitFrame) return;
+        frameFitFrame = window.requestAnimationFrame(() => {
+          frameFitFrame = 0;
+          installEmbeddedFit();
+        });
+      }
+      function resetFrameLayout() {
+        elements.previewStage.classList.remove('is-content-sized');
+        elements.previewFrame.style.height = '';
+        elements.previewFrame.style.flex = '';
+      }
+      function loadPreview(entry, reload = false) {
+        resetFrameLayout();
         if (!entry || !entry.preview_href) {
           elements.previewFrame.removeAttribute('src');
           elements.previewFrame.style.display = 'none';
           elements.stageEmpty.style.display = 'grid';
-          elements.stageState.textContent = 'source only';
+          elements.stageState.textContent = entry ? 'source only' : 'planned queue';
           elements.stageEmptyTitle.textContent = entry ? '暂无 HTML 预览' : '当前分类暂无 active 条目';
           elements.stageEmptyText.textContent = entry ? '请通过上方按钮打开源文件。' : '已登记的条目会显示在下方维护队列。';
           return;
@@ -429,51 +674,70 @@
         elements.previewFrame.src = url.toString();
       }
       function renderCurrent() {
-        const group = findGroup(state.groupId) || data.groups[0];
+        const group = findGroup(state.groupId) || groups[0];
         const entry = findEntry(state.entryId);
         if (!group) return;
-        const lens = palette[data.groups.indexOf(group) % palette.length];
+        const lens = palette[groups.indexOf(group) % palette.length];
         document.documentElement.style.setProperty('--lens', lens);
-        elements.groupLabel.textContent = group.label;
-        elements.catalogStatus.textContent = data.generated_entry_count + ' active entries';
-        elements.catalogMeta.textContent = data.groups.length + ' groups · manifest synced';
+        elements.groupLabel.textContent = group.label || group.id;
+        elements.catalogStatus.textContent = `${data.generated_entry_count ?? activeEntries.length} active entries`;
+        elements.catalogMeta.textContent = `${groups.length} groups · manifest synced`;
         renderPlanned(group);
         if (!entry) {
-          elements.viewerTitle.textContent = (group.id + ' / QUEUE').toUpperCase();
+          elements.viewerTitle.textContent = `${group.label || group.id} / QUEUE`.toUpperCase();
           elements.viewerQuestion.textContent = group.question || '当前分类暂无 active 条目。';
           elements.viewerType.textContent = 'PLANNED';
           configureLink(elements.openArtifact, null);
           configureLink(elements.openSource, null);
-          loadPreview(null, false);
+          loadPreview(null);
           return;
         }
         elements.viewerTitle.textContent = entry.title || entry.id;
         elements.viewerQuestion.textContent = entry.question || '';
-        elements.viewerType.textContent = String(entry.type || entry.kind || 'document').toUpperCase();
-        configureLink(elements.openArtifact, entry.artifact_href || entry.path_href || entry.preview_href);
+        elements.viewerType.textContent = typeLabelFor(entry);
+        configureLink(elements.openArtifact, entry.artifact_href || entry.preview_href);
         configureLink(elements.openSource, entry.source_href || entry.artifact_href);
-        loadPreview(entry, false);
+        loadPreview(entry);
       }
-      elements.projectName.textContent = data.project.name || 'Documentation Atlas';
-      elements.projectDescription.textContent = data.project.description || '按要回答的问题进入对应资料。';
-      elements.brandLink.href = data.links.readme || '#';
-      elements.readmeLink.href = data.links.readme || '#';
-      elements.manifestLink.href = data.links.manifest || '#';
-      elements.previewFrame.addEventListener('load', () => { elements.stageState.textContent = 'ready'; });
-      elements.previewFrame.addEventListener('error', () => { elements.stageState.textContent = 'unavailable'; });
+      elements.projectName.textContent = project.name || 'Documentation Atlas';
+      elements.projectDescription.textContent = project.description || '按要回答的问题进入对应资料。';
+      document.title = `${project.name || 'Documentation Atlas'} · Documentation Atlas`;
+      elements.brandLink.href = links.readme || '#';
+      elements.readmeLink.href = links.readme || '#';
+      elements.manifestLink.href = links.manifest || '#';
+      elements.previewFrame.addEventListener('load', () => {
+        scheduleEmbeddedFit();
+        window.requestAnimationFrame(scheduleEmbeddedFit);
+        elements.stageState.textContent = 'ready';
+      });
+      elements.previewFrame.addEventListener('error', () => {
+        elements.stageState.textContent = 'unavailable';
+        elements.previewFrame.style.display = 'none';
+        elements.stageEmpty.style.display = 'grid';
+      });
       elements.refreshPreview.addEventListener('click', () => loadPreview(findEntry(state.entryId), true));
-      elements.entrySearch.addEventListener('input', (event) => { state.search = event.target.value; renderNavigation(); });
+      elements.mobileEntryPicker?.addEventListener('change', (event) => selectEntry(event.target.value));
+      if (typeof ResizeObserver === 'function') {
+        frameFitObserver = new ResizeObserver(scheduleEmbeddedFit);
+        frameFitObserver.observe(elements.previewFrame);
+      }
+      elements.entrySearch.addEventListener('input', (event) => {
+        state.search = event.target.value;
+        renderNavigation();
+      });
       window.addEventListener('popstate', () => {
         const url = new URL(window.location.href);
         const entryId = url.searchParams.get('diagram') || url.searchParams.get('entry');
+        const groupId = url.searchParams.get('group');
         if (findEntry(entryId)) selectEntry(entryId, { updateHistory: false });
-        else if (findGroup(url.searchParams.get('group'))) selectGroup(url.searchParams.get('group'), { updateHistory: false });
+        else if (findGroup(groupId)) selectGroup(groupId, { updateHistory: false });
         else selectEntry(null, { replaceHistory: true });
       });
       const initialUrl = new URL(window.location.href);
       const initialEntryId = initialUrl.searchParams.get('diagram') || initialUrl.searchParams.get('entry');
+      const initialGroupId = initialUrl.searchParams.get('group');
       if (findEntry(initialEntryId)) selectEntry(initialEntryId, { updateHistory: false });
-      else if (findGroup(initialUrl.searchParams.get('group'))) selectGroup(initialUrl.searchParams.get('group'), { updateHistory: false });
+      else if (findGroup(initialGroupId)) selectGroup(initialGroupId, { updateHistory: false });
       else selectEntry(null, { replaceHistory: true });
     })();
   </script>

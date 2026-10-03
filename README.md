@@ -135,3 +135,7 @@ Provider 模块导出 run(context, options) 或默认函数，并返回：
 ## 发布边界
 
 npm 包只包含 CLI、通用源码、模板、schema、fixture 和本 README。项目源码、任务目录、.git、凭据、业务图谱和 reference 文档由使用它的项目自行维护，不会进入发布包。
+
+## License
+
+MIT License. See [LICENSE](./LICENSE).

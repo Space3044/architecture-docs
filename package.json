@@ -1,6 +1,6 @@
 {
   "name": "architecture-docs",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Manifest-driven static documentation portal and coverage checker",
   "type": "module",
   "bin": {
